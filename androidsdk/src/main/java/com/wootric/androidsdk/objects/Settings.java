@@ -824,6 +824,10 @@ public class Settings implements Parcelable {
             settings.setDeclineResurveyThrottle(settingsObject.optInt("decline_resurvey_throttle"));
         }
 
+        if (settingsObject.has("language")) {
+            settings.setLanguageCode(settingsObject.optString("language"));
+        }
+
         JSONObject localizedTextsJson = settingsObject.optJSONObject("localized_texts");
         settings.localizedTexts = LocalizedTexts.fromJson(localizedTextsJson, settings.getSurveyType());
 
