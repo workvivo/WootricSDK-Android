@@ -314,15 +314,15 @@ public class Settings implements Parcelable {
     }
 
     public String getThankYouLinkText(int score) {
-        String thankYouLinkText = null;
+        String thankYouLinkText = "Review Workvivo";
 
-        if (localCustomThankYou != null) {
-            thankYouLinkText = localCustomThankYou.getLinkTextForScore(score, surveyType, surveyTypeScale);
-        }
+        // if (localCustomThankYou != null) {
+        //     thankYouLinkText = localCustomThankYou.getLinkTextForScore(score, surveyType, surveyTypeScale);
+        // }
 
-        if (adminPanelCustomThankYou != null && thankYouLinkText == null) {
-            thankYouLinkText = adminPanelCustomThankYou.getLinkTextForScore(score, surveyType, surveyTypeScale);
-        }
+        // if (adminPanelCustomThankYou != null && thankYouLinkText == null) {
+        //     thankYouLinkText = adminPanelCustomThankYou.getLinkTextForScore(score, surveyType, surveyTypeScale);
+        // }
 
         return thankYouLinkText;
     }
