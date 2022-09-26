@@ -328,22 +328,22 @@ public class Settings implements Parcelable {
     }
 
     public Uri getThankYouLinkUri(String email, int score, String comment) {
-        Uri thankYouLinkUri = null;
+        Uri thankYouLinkUri = "workvivo://production/appreview";
 
-        if (localCustomThankYou != null) {
-            thankYouLinkUri = localCustomThankYou.getLinkUri(score, surveyType, surveyTypeScale);
+        // if (localCustomThankYou != null) {
+        //     thankYouLinkUri = localCustomThankYou.getLinkUri(score, surveyType, surveyTypeScale);
 
-        }
+        // }
 
-        if (adminPanelCustomThankYou != null && thankYouLinkUri == null) {
-            thankYouLinkUri = adminPanelCustomThankYou.getLinkUri(score, surveyType, surveyTypeScale);
-        }
+        // if (adminPanelCustomThankYou != null && thankYouLinkUri == null) {
+        //     thankYouLinkUri = adminPanelCustomThankYou.getLinkUri(score, surveyType, surveyTypeScale);
+        // }
 
-        if (thankYouLinkUri != null) {
-            thankYouLinkUri = addEmail(thankYouLinkUri, email, score);
-            thankYouLinkUri = addScore(thankYouLinkUri, score);
-            thankYouLinkUri = addComment(thankYouLinkUri, comment, score);
-        }
+        // if (thankYouLinkUri != null) {
+        //     thankYouLinkUri = addEmail(thankYouLinkUri, email, score);
+        //     thankYouLinkUri = addScore(thankYouLinkUri, score);
+        //     thankYouLinkUri = addComment(thankYouLinkUri, comment, score);
+        // }
 
         return thankYouLinkUri;
     }
