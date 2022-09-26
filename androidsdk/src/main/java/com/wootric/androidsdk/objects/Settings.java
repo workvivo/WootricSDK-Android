@@ -328,7 +328,7 @@ public class Settings implements Parcelable {
     }
 
     public Uri getThankYouLinkUri(String email, int score, String comment) {
-        Uri thankYouLinkUri = "workvivo://production/appreview";
+        Uri thankYouLinkUri = Uri.parse("workvivo://production/mobilefallback");
 
         // if (localCustomThankYou != null) {
         //     thankYouLinkUri = localCustomThankYou.getLinkUri(score, surveyType, surveyTypeScale);
