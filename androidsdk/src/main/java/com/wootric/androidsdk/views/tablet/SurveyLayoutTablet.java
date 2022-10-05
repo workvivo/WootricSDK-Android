@@ -428,7 +428,6 @@ public class SurveyLayoutTablet extends LinearLayout
                 (score.isPromoter() && mSettings.shouldSkipFollowupScreenForPromoters());
 
         if(score.isPromoter()){
-            dismissSurvey();
             onThankYouActionClick();
         }
         else if(mCurrentScore != Constants.NOT_SET) {

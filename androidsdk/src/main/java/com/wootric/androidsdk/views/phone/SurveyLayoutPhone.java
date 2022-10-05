@@ -291,7 +291,6 @@ public class SurveyLayoutPhone extends LinearLayout
         boolean shouldSkipFeedbackScreen = mSettings.skipFeedbackScreen() ||
                 (score.isPromoter() && mSettings.shouldSkipFollowupScreenForPromoters());
         if(score.isPromoter()){
-            dismissSurvey();
             onThankYouActionClick();
         }
         else if(isFeedbackState() || shouldSkipFeedbackScreen) {
