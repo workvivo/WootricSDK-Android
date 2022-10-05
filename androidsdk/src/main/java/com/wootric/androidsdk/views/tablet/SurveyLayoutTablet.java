@@ -427,7 +427,11 @@ public class SurveyLayoutTablet extends LinearLayout
         boolean shouldSkipFeedbackScreen = mSettings.skipFeedbackScreen() ||
                 (score.isPromoter() && mSettings.shouldSkipFollowupScreenForPromoters());
 
-        if(mCurrentScore != Constants.NOT_SET) {
+        if(score.isPromoter()){
+            dismissSurvey();
+            onThankYouActionClick();
+        }
+        else if(mCurrentScore != Constants.NOT_SET) {
             if(shouldSkipFeedbackScreen) {
                 updateState(STATE_THANK_YOU);
             } else {
