@@ -22,17 +22,21 @@
 
 package com.wootric.androidsdk.views.phone;
 
+import static com.wootric.androidsdk.utils.ScreenUtils.setViewsVisibility;
+
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.graphics.PorterDuffColorFilter;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Parcel;
 import android.os.Parcelable;
-import androidx.constraintlayout.widget.ConstraintLayout;
-import androidx.core.widget.TextViewCompat;
-
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.TypedValue;
@@ -46,17 +50,29 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.constraintlayout.widget.ConstraintLayout;
+import androidx.core.content.ContextCompat;
+import androidx.core.graphics.drawable.DrawableCompat;
+import androidx.core.widget.TextViewCompat;
+
 import com.wootric.androidsdk.R;
 import com.wootric.androidsdk.objects.Score;
 import com.wootric.androidsdk.objects.Settings;
 import com.wootric.androidsdk.utils.ScreenUtils;
+import com.wootric.androidsdk.utils.Utils;
 import com.wootric.androidsdk.views.SurveyLayout;
 import com.wootric.androidsdk.views.SurveyLayoutListener;
 import com.wootric.androidsdk.views.ThankYouLayoutListener;
+import com.wootric.androidsdk.views.driverpicklist.DriverPicklist;
+import com.wootric.androidsdk.views.driverpicklist.DriverPicklistButtonListener;
 
-import java.lang.reflect.Field;
+import org.json.JSONException;
+import org.json.JSONObject;
 
-import static com.wootric.androidsdk.utils.ScreenUtils.setViewsVisibility;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
 
 /**
  * Created by maciejwitowski on 9/21/15.
@@ -77,6 +93,7 @@ public class SurveyLayoutPhone extends LinearLayout
     private TextView mBtnSubmit;
     private TextView mBtnDismiss;
     private TextView mBtnEditScore;
+    private DriverPicklist mDriverPicklist;
 
     private EditText mEtFeedback;
 
@@ -96,6 +113,8 @@ public class SurveyLayoutPhone extends LinearLayout
     private int mScaleMinimum;
     private int mScaleMaximum;
     private int mScoresCount;
+
+    private HashMap<String, String> selectedAnswers;
 
     private static final int STATE_SURVEY = 0;
     private static final int STATE_FEEDBACK = 1;
@@ -153,6 +172,44 @@ public class SurveyLayoutPhone extends LinearLayout
     private void initViews() {
         mBtnSubmit = (TextView) mLayoutBody.findViewById(R.id.wootric_btn_submit);
         mBtnDismiss = (TextView) mLayoutBody.findViewById(R.id.wootric_btn_dismiss);
+        mDriverPicklist = (DriverPicklist) mLayoutBody.findViewById(R.id.wootric_driver_picklist);
+        selectedAnswers = new HashMap<>();
+
+        try {
+            Resources res = mContext.getResources();
+            mColorSelected = res.getColor(mSettings.getScoreColor());
+            mColorEnabled = res.getColor(mSettings.getSurveyColor());
+        } catch(Exception e) {
+            mColorSelected = mSettings.getScoreColor();
+            mColorEnabled = mSettings.getSurveyColor();
+        }
+
+        new DriverPicklist.Configure()
+                .driverPicklist(mDriverPicklist)
+                .selectedColor(mColorSelected)
+                .selectedFontColor(Utils.getTextColor(mColorSelected, mSettings.getScoreScaleType(), true))
+                .deselectedColor(Color.parseColor("#ffffff"))
+                .deselectedFontColor(Utils.getTextColor(mColorSelected, mSettings.getScoreScaleType(), false))
+                .selectTransitionMS(100)
+                .deselectTransitionMS(100)
+                .labels(null)
+                .mode(DriverPicklist.Mode.MULTI)
+                .allCaps(false)
+                .gravity(DriverPicklist.Gravity.CENTER)
+                .textSize(getResources().getDimensionPixelSize(R.dimen.default_textsize))
+                .verticalSpacing(getResources().getDimensionPixelSize(R.dimen.vertical_spacing))
+                .minHorizontalSpacing(getResources().getDimensionPixelSize(R.dimen.min_horizontal_spacing))
+                .typeface(Typeface.DEFAULT)
+                .setDriverPicklistButtonListener(new DriverPicklistButtonListener() {
+                    @Override
+                    public void buttonSelected(int index) {
+                    }
+                    @Override
+                    public void buttonDeselected(int index) {
+                    }
+                })
+                .build();
+
         mBtnSubmit.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -191,12 +248,10 @@ public class SurveyLayoutPhone extends LinearLayout
 
     private void initFeedbackViewElements() {
         mEtFeedback = (EditText) mLayoutBody.findViewById(R.id.wootric_et_feedback);
-        Drawable etFeedbackBackground = mEtFeedback.getBackground();
-        etFeedbackBackground.setColorFilter(mColorBlack, PorterDuff.Mode.SRC_ATOP);
-        etFeedbackBackground.setAlpha(26);
-        mEtFeedback.setOnFocusChangeListener(onEtFeedbackFocusChanged());
         mEtFeedback.setImeActionLabel(mSettings.getBtnSubmit(), KeyEvent.KEYCODE_ENTER);
         mEtFeedback.setImeOptions(EditorInfo.IME_ACTION_DONE);
+        Drawable background = mEtFeedback.getBackground();
+        background.setColorFilter(new PorterDuffColorFilter(mSettings.getSurveyColor(), PorterDuff.Mode.SRC_IN));
         mEtFeedback.setOnKeyListener(new OnKeyListener() {
             public boolean onKey(View view, int keyCode, KeyEvent keyevent) {
                 if ((keyevent.getAction() == KeyEvent.ACTION_DOWN) && (keyCode == KeyEvent.KEYCODE_ENTER)) {
@@ -210,7 +265,7 @@ public class SurveyLayoutPhone extends LinearLayout
         mBtnEditScore = (TextView) findViewById(R.id.wootric_btn_edit_score);
         mBtnEditScore.setOnClickListener(onEditScoreClick());
 
-        mFeedbackViews = new View[] {mBtnEditScore, mEtFeedback };
+        mFeedbackViews = new View[] {mBtnEditScore, mDriverPicklist, mEtFeedback };
     }
 
     private void initScoreLayout() {
@@ -233,19 +288,6 @@ public class SurveyLayoutPhone extends LinearLayout
         scoreView.setTextColor(mColorNotSelected);
 
         return scoreView;
-    }
-
-    private OnFocusChangeListener onEtFeedbackFocusChanged() {
-        return new OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if(hasFocus) {
-                    Drawable etFeedbackBackground = mEtFeedback.getBackground();
-                    etFeedbackBackground.setColorFilter(mColorSelected, PorterDuff.Mode.SRC_ATOP);
-                    etFeedbackBackground.setAlpha(255);
-                }
-            }
-        };
     }
 
     @Override
@@ -305,7 +347,22 @@ public class SurveyLayoutPhone extends LinearLayout
             return;
 
         String text = mEtFeedback.getText().toString();
-        mSurveyLayoutListener.onSurveySubmit(mRatingBar.getSelectedScore(), text);
+        try {
+            JSONObject dpl = mSettings.getDriverPicklist(mRatingBar.getSelectedScore());
+            if (dpl != null) {
+                Iterator<String> keys = dpl.keys();
+                while(keys.hasNext()) {
+                    String key = keys.next();
+                    if (mDriverPicklist.selectedButtons().contains(dpl.getString(key))) {
+                        selectedAnswers.put(key, dpl.getString(key));
+                    }
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        mSurveyLayoutListener.onSurveySubmit(mRatingBar.getSelectedScore(), text, selectedAnswers);
     }
 
     private void dismissSurvey() {
@@ -357,47 +414,35 @@ public class SurveyLayoutPhone extends LinearLayout
         mAnchorLikely.setText(mSettings.getAnchorLikely());
         mAnchorNotLikely.setText(mSettings.getAnchorNotLikely());
         mBtnSubmit.setText(mSettings.getBtnSubmit());
+        mBtnSubmit.setPaintFlags(mBtnSubmit.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         mBtnDismiss.setText(mSettings.getBtnDismiss());
+        mBtnDismiss.setPaintFlags(mBtnDismiss.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
         mBtnEditScore.setText(mSettings.getBtnEditScore());
         mEtFeedback.setHint(mSettings.getFollowupPlaceholder(mRatingBar.getSelectedScore()));
     }
 
     private void setColors() {
-        Resources res = mContext.getResources();
-        mColorSelected = res.getColor(mSettings.getScoreColor());
-        mColorEnabled = res.getColor(mSettings.getSurveyColor());
         mRatingBar.setSelectedColor(mColorSelected);
 
-        mBtnDismiss.setTextColor(mColorEnabled);
-
+        mBtnDismiss.setTextColor(Color.BLACK);
+        mBtnEditScore.setTextColor(Utils.getTextColor(mColorEnabled, "filled", true));
         mBtnEditScore.setBackgroundColor(mColorEnabled);
-        mTvSurveyHeader.setBackgroundColor(mColorEnabled);
-
-        setCursorDrawableColor(mEtFeedback, mColorSelected);
-    }
-
-    private static void setCursorDrawableColor(EditText editText, int color) {
-        try {
-            Field fCursorDrawableRes = TextView.class.getDeclaredField("mCursorDrawableRes");
-            fCursorDrawableRes.setAccessible(true);
-            int mCursorDrawableRes = fCursorDrawableRes.getInt(editText);
-            Field fEditor = TextView.class.getDeclaredField("mEditor");
-            fEditor.setAccessible(true);
-            Object editor = fEditor.get(editText);
-            Class<?> clazz = editor.getClass();
-            Field fCursorDrawable = clazz.getDeclaredField("mCursorDrawable");
-            fCursorDrawable.setAccessible(true);
-
-            Drawable[] drawables = new Drawable[2];
-            Resources res = editText.getContext().getResources();
-            drawables[0] = res.getDrawable(mCursorDrawableRes);
-            drawables[1] = res.getDrawable(mCursorDrawableRes);
-            drawables[0].setColorFilter(color, PorterDuff.Mode.SRC_IN);
-            drawables[1].setColorFilter(color, PorterDuff.Mode.SRC_IN);
-            fCursorDrawable.set(editor, drawables);
-        } catch (final Throwable t) {
-            Log.e("Wootric-SDK", t.toString());
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            for (Drawable drawable : mBtnEditScore.getCompoundDrawablesRelative()) {
+                if (drawable != null) {
+                    drawable.setColorFilter(new PorterDuffColorFilter(Utils.getTextColor(mColorEnabled, "filled", true), PorterDuff.Mode.SRC_IN));
+                }
+            }
+        } else {
+            for (Drawable drawable : mBtnEditScore.getCompoundDrawables()) {
+                if (drawable != null) {
+                    drawable.setColorFilter(new PorterDuffColorFilter(Utils.getTextColor(mColorEnabled, "filled", true), PorterDuff.Mode.SRC_IN));
+                }
+            }
         }
+
+        mTvSurveyHeader.setBackgroundColor(mColorEnabled);
+        mTvSurveyHeader.setTextColor(Utils.getTextColor(mColorEnabled, "filled", true));
     }
 
     private void updateState(int state) {
@@ -435,6 +480,48 @@ public class SurveyLayoutPhone extends LinearLayout
         mTvSurveyHeader.setText(mSettings.getFollowupQuestion(currentScore));
         mEtFeedback.setHint(mSettings.getFollowupPlaceholder(currentScore));
 
+        mDriverPicklist.removeAllViews();
+        selectedAnswers.clear();
+        try {
+            JSONObject dplSettings = mSettings.getDriverPicklistSettings(currentScore);
+            JSONObject dpl = mSettings.getDriverPicklist(currentScore);
+
+            if (dplSettings.has("dpl_multi_select") && dplSettings.getBoolean("dpl_multi_select")) {
+                mDriverPicklist.setMode(DriverPicklist.Mode.MULTI);
+            } else {
+                mDriverPicklist.setMode(DriverPicklist.Mode.SINGLE);
+            }
+
+            if (dplSettings.has("dpl_hide_open_ended") && dplSettings.getBoolean("dpl_hide_open_ended")) {
+                mEtFeedback.setVisibility(View.GONE);
+            } else {
+                mEtFeedback.setVisibility(View.VISIBLE);
+            }
+            ArrayList<String> dplList = new ArrayList<>();
+            if (dpl != null) {
+                Iterator<String> keys = dpl.keys();
+
+                while(keys.hasNext()) {
+                    String key = keys.next();
+                    dplList.add(dpl.get(key).toString());
+                }
+            }
+
+            if (dplSettings.has("dpl_randomize_list") && dplSettings.getBoolean("dpl_randomize_list")) {
+                ArrayList<String> shuffled = new ArrayList<>(dplList);
+                Collections.shuffle(shuffled);
+                for (String value : shuffled) {
+                    mDriverPicklist.addButton(value);
+                }
+            } else {
+                for (String value : dplList) {
+                    mDriverPicklist.addButton(value);
+                }
+            }
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
         mThankYouLayout.setVisibility(GONE);
         setKeyboardVisibility(true);
     }
@@ -451,7 +538,7 @@ public class SurveyLayoutPhone extends LinearLayout
     }
 
     private void updateSubmitBtn(boolean enable) {
-        mBtnSubmit.setTextColor(enable ? mColorEnabled : mColorBlack);
+        mBtnSubmit.setTextColor(mColorBlack);
         mBtnSubmit.setAlpha(enable ? 1f : 0.26f);
         mBtnSubmit.setEnabled(enable);
     }

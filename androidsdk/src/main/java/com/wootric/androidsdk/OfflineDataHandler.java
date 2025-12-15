@@ -30,6 +30,9 @@ import com.wootric.androidsdk.utils.PreferencesUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.HashMap;
+import java.util.Iterator;
+
 /**
  * Created by maciejwitowski on 10/30/15.
  */
@@ -45,6 +48,8 @@ public class OfflineDataHandler {
     private static final String KEY_PRIORITY = "priority";
     private static final String KEY_TEXT = "text";
     private static final String KEY_UNIQUE_LINK = "survey[unique_link]";
+    private static final String KEY_LANGUAGE = "survey[language]";
+    private static final String KEY_DRIVER_PICKLIST = "driver_picklist";
 
     private final PreferencesUtils preferencesUtils;
 
@@ -63,6 +68,12 @@ public class OfflineDataHandler {
 
         try {
             JSONObject jsonResponse = new JSONObject(preferencesUtils.getResponse());
+            HashMap<String, String>driverPicklist = new HashMap<>();
+            JSONObject driverPicklistObject = jsonResponse.getJSONObject(KEY_DRIVER_PICKLIST);
+            for (Iterator<String> it = driverPicklistObject.keys(); it.hasNext(); ) {
+                String entry = it.next();
+                driverPicklist.put(entry, driverPicklistObject.getString(entry));
+            }
             wootricRemoteClient.createResponse(
                     jsonResponse.getLong(KEY_END_USER_ID),
                     jsonResponse.getLong(KEY_USER_ID),
@@ -72,7 +83,9 @@ public class OfflineDataHandler {
                     jsonResponse.getInt(KEY_SCORE),
                     jsonResponse.getInt(KEY_PRIORITY),
                     jsonResponse.getString(KEY_TEXT),
-                    jsonResponse.getString(KEY_UNIQUE_LINK)
+                    jsonResponse.getString(KEY_UNIQUE_LINK),
+                    jsonResponse.getString(KEY_LANGUAGE),
+                    driverPicklist
             );
 
             Log.d(LOG_TAG, "Processed offline Response with data: " + offlineResponse);
@@ -107,7 +120,7 @@ public class OfflineDataHandler {
         preferencesUtils.putDecline(null);
     }
 
-    public void saveOfflineResponse(long endUserId, long userId, long accountId, String originUrl, int score, int priority, String text, String uniqueLink) {
+    public void saveOfflineResponse(long endUserId, long userId, long accountId, String originUrl, int score, int priority, String text, String uniqueLink, String language) {
         JSONObject jsonResponse = new JSONObject();
         try {
             jsonResponse.put(KEY_END_USER_ID, endUserId);
@@ -118,6 +131,7 @@ public class OfflineDataHandler {
             jsonResponse.put(KEY_PRIORITY, priority);
             jsonResponse.put(KEY_TEXT, text);
             jsonResponse.put(KEY_UNIQUE_LINK, uniqueLink);
+            jsonResponse.put(KEY_LANGUAGE, language);
         } catch (JSONException e) {
             e.printStackTrace();
         }

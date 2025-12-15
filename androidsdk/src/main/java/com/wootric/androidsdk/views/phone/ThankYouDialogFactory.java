@@ -26,6 +26,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.res.ColorStateList;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.os.Build;
+import android.widget.Button;
 
 import com.wootric.androidsdk.WootricSurveyCallback;
 import com.wootric.androidsdk.objects.Settings;
@@ -37,14 +42,19 @@ import java.util.HashMap;
  * Created by maciejwitowski on 10/2/15.
  */
 public class ThankYouDialogFactory {
-    public static Dialog create(Context context, Settings settings, final int score, final String text, final WootricSurveyCallback surveyCallback, final OnSurveyFinishedListener onSurveyFinishedListener) {
-        AlertDialog thankYouDialog = new AlertDialog.Builder(context).create();
+    public static Dialog create(final Context context, final Settings settings, final int score, final String text, final WootricSurveyCallback surveyCallback, final OnSurveyFinishedListener onSurveyFinishedListener, final HashMap<String, String> driverPicklist) {
+        final AlertDialog thankYouDialog;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
+            thankYouDialog = new AlertDialog.Builder(context, android.R.style.Theme_Material_Light_Dialog_Alert).create();
+        } else {
+            thankYouDialog = new AlertDialog.Builder(context, AlertDialog.THEME_HOLO_LIGHT).create();
+        }
         thankYouDialog.setCancelable(false);
         final String thankYouText = settings.getFinalThankYou(score);
 
         thankYouDialog.setMessage(thankYouText);
-
-        thankYouDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "OK", new DialogInterface.OnClickListener() {
+        thankYouDialog.setCanceledOnTouchOutside(true);
+        thankYouDialog.setButton(AlertDialog.BUTTON_NEGATIVE, "dismiss", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
@@ -58,7 +68,20 @@ public class ThankYouDialogFactory {
                         hashMap.put("score", score);
                     }
                     hashMap.put("text", text);
+                    hashMap.put("driver_picklist", driverPicklist);
                     surveyCallback.onSurveyDidHide(hashMap);
+                }
+            }
+        });
+
+        thankYouDialog.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    ColorStateList csl = ColorStateList.valueOf(Color.BLACK);
+                    Button dismissButton = thankYouDialog.getButton(AlertDialog.BUTTON_NEGATIVE);
+                    dismissButton.setTextColor(csl);
+                    dismissButton.setPaintFlags(dismissButton.getPaintFlags() | Paint.UNDERLINE_TEXT_FLAG);
                 }
             }
         });

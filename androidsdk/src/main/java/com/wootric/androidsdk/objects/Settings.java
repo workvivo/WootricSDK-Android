@@ -22,9 +22,12 @@
 
 package com.wootric.androidsdk.objects;
 
+import static com.wootric.androidsdk.utils.Utils.isBlank;
+
 import android.net.Uri;
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import com.wootric.androidsdk.Constants;
 import com.wootric.androidsdk.R;
@@ -34,8 +37,6 @@ import org.json.JSONObject;
 
 import java.util.Date;
 
-import static com.wootric.androidsdk.utils.Utils.isBlank;
-
 /**
  * Created by maciejwitowski on 5/5/15.
  */
@@ -43,7 +44,6 @@ public class Settings implements Parcelable {
     private Long firstSurvey = -1L;
     private int adminPanelTimeDelay = Constants.NOT_SET;
     private LocalizedTexts localizedTexts;
-
     private Long userID;
     private Long accountID;
 
@@ -53,14 +53,20 @@ public class Settings implements Parcelable {
     private WootricSocial adminPanelSocial;
     private WootricSocial localSocial;
 
+    private WootricCustomColor adminPanelCustomColors;
+
     private WootricCustomThankYou localCustomThankYou;
     private WootricCustomThankYou adminPanelCustomThankYou;
+
+    private JSONObject driverPicklist;
 
     private int timeDelay = Constants.NOT_SET;
 
     private boolean surveyedDefault = true;
     private boolean surveyImmediately;
     private boolean showOptOut;
+    private boolean showPoweredBy;
+    private boolean customFirstQuestionEnabled;
     private boolean skipFollowupScreenForPromoters;
     private boolean skipFeedbackScreen;
 
@@ -75,6 +81,7 @@ public class Settings implements Parcelable {
     private String recommendTarget;
     private String surveyType;
     private String eventName;
+    private String customFirstQuestion;
 
     private int surveyColor = Constants.NOT_SET;
     private int scoreColor = Constants.NOT_SET;
@@ -82,8 +89,15 @@ public class Settings implements Parcelable {
     private int socialSharingColor = Constants.NOT_SET;
     private int surveyTypeScale = 0;
 
+    private String scoreScaleType = "filled";
+
     private String clientID;
     private String accountToken;
+
+    private Boolean showDisclaimer = false;
+    private String disclaimerText;
+    private Uri disclaimerLinkURL;
+    private String disclaimerLinkText;
 
     public Settings(Settings settings) {
         this.firstSurvey = settings.firstSurvey;
@@ -95,12 +109,15 @@ public class Settings implements Parcelable {
         this.localCustomMessage = new WootricCustomMessage(settings.getLocalCustomMessage());
         this.adminPanelSocial = new WootricSocial(settings.adminPanelSocial);
         this.localSocial = new WootricSocial(settings.localSocial);
+        this.adminPanelCustomColors = new WootricCustomColor(settings.adminPanelCustomColors);
         this.localCustomThankYou = new WootricCustomThankYou(settings.localCustomThankYou);
         this.adminPanelCustomThankYou = new WootricCustomThankYou(settings.adminPanelCustomThankYou);
         this.timeDelay = settings.timeDelay;
         this.surveyedDefault = settings.surveyedDefault;
         this.surveyImmediately = settings.surveyImmediately;
         this.showOptOut = settings.showOptOut;
+        this.showPoweredBy = settings.showPoweredBy;
+        this.customFirstQuestionEnabled = settings.customFirstQuestionEnabled;
         this.skipFollowupScreenForPromoters = settings.skipFollowupScreenForPromoters;
         this.skipFeedbackScreen = settings.skipFeedbackScreen;
         this.dailyResponseCap = settings.dailyResponseCap;
@@ -113,11 +130,16 @@ public class Settings implements Parcelable {
         this.recommendTarget = settings.recommendTarget;
         this.surveyType = settings.surveyType;
         this.eventName = settings.eventName;
+        this.customFirstQuestion = settings.customFirstQuestion;
         this.surveyColor = settings.surveyColor;
         this.scoreColor = settings.scoreColor;
         this.thankYouButtonBackgroundColor = settings.thankYouButtonBackgroundColor;
         this.socialSharingColor = settings.socialSharingColor;
         this.surveyTypeScale = settings.surveyTypeScale;
+        this.showDisclaimer = settings.showDisclaimer;
+        this.disclaimerText = settings.disclaimerText;
+        this.disclaimerLinkURL = settings.disclaimerLinkURL;
+        this.disclaimerLinkText = settings.disclaimerLinkText;
     }
 
     public Settings() {
@@ -134,12 +156,17 @@ public class Settings implements Parcelable {
         this.adminPanelTimeDelay = settings.adminPanelTimeDelay;
         this.adminPanelCustomThankYou = settings.adminPanelCustomThankYou;
         this.adminPanelSocial = settings.adminPanelSocial;
+        this.adminPanelCustomColors = settings.adminPanelCustomColors;
+        this.driverPicklist = settings.driverPicklist;
         this.localizedTexts = settings.localizedTexts;
         this.userID = settings.userID;
         this.accountID = settings.accountID;
         this.resurveyThrottle = settings.resurveyThrottle;
         this.declineResurveyThrottle = settings.declineResurveyThrottle;
         this.surveyType = settings.surveyType;
+        this.customFirstQuestion = settings.customFirstQuestion;
+        this.customFirstQuestionEnabled = settings.customFirstQuestionEnabled;
+        this.showPoweredBy = settings.showPoweredBy;
     }
 
     public boolean firstSurveyDelayPassed(long timeFrom) {
@@ -170,6 +197,12 @@ public class Settings implements Parcelable {
     }
 
     public boolean isShowOptOut() { return showOptOut; }
+
+    public boolean isShowPoweredBy() { return this.showPoweredBy; }
+
+    public boolean showDisclaimer() { return this.showDisclaimer; }
+
+    public boolean isCustomFirstQuestionEnabled() { return customFirstQuestionEnabled; }
 
     public boolean isSurveyImmediately() {
         return surveyImmediately;
@@ -213,6 +246,9 @@ public class Settings implements Parcelable {
     }
 
     public String getSurveyQuestion() {
+        if (customFirstQuestionEnabled && customFirstQuestion != null) {
+            return customFirstQuestion;
+        }
         return localizedTexts.getSurveyQuestion();
     }
 
@@ -236,7 +272,27 @@ public class Settings implements Parcelable {
         return localizedTexts.getEditScore().toUpperCase();
     }
 
-    public String getBtnOptOut() { return localizedTexts.getOptOut().toUpperCase(); }
+    public String getBtnOptOut() { return localizedTexts.getOptOut(); }
+
+    public String getDisclaimerText() { return this.disclaimerText; }
+    public String getDisclaimerLinkText() { return this.disclaimerLinkText; }
+    public Uri getDisclaimerLinkURL() { return this.disclaimerLinkURL; }
+
+    public JSONObject getDriverPicklist(int score) throws JSONException {
+        JSONObject dpl = new JSONObject();
+        if (adminPanelCustomMessage != null) {
+            dpl =  adminPanelCustomMessage.getDriverPicklistForScore(score, surveyType, surveyTypeScale);
+        }
+        return dpl;
+    }
+
+    public JSONObject getDriverPicklistSettings(int score) throws JSONException {
+        JSONObject dplSettings = new JSONObject();
+        if (adminPanelCustomMessage != null) {
+            dplSettings =  adminPanelCustomMessage.getDriverPicklistSettingsForScore(score, surveyType, surveyTypeScale);
+        }
+        return dplSettings;
+    }
 
     public String getFollowupQuestion(int score) {
         String followupQuestion = null;
@@ -581,6 +637,8 @@ public class Settings implements Parcelable {
         this.eventName = eventName;
     }
 
+    public String getCustomFirstQuestion() { return customFirstQuestion; }
+
     public String getProductName() {
         return productName;
     }
@@ -673,6 +731,8 @@ public class Settings implements Parcelable {
     public int getSurveyColor() {
         if (surveyColor != Constants.NOT_SET){
             return surveyColor;
+        } else if (adminPanelCustomColors != null && adminPanelCustomColors.getCustomPrimaryColor() != Constants.NOT_SET) {
+            return adminPanelCustomColors.getCustomPrimaryColor();
         }
         return R.color.wootric_survey_layout_header_background;
     }
@@ -684,6 +744,8 @@ public class Settings implements Parcelable {
     public int getScoreColor() {
         if (scoreColor != Constants.NOT_SET){
             return scoreColor;
+        } else if (adminPanelCustomColors != null && adminPanelCustomColors.getCustomSecondaryColor() != Constants.NOT_SET) {
+            return adminPanelCustomColors.getCustomSecondaryColor();
         }
         return R.color.wootric_score_color;
     }
@@ -692,9 +754,36 @@ public class Settings implements Parcelable {
         this.scoreColor = scoreColor;
     }
 
+    public String getScoreScaleType() {
+        if (adminPanelCustomColors != null && this.adminPanelCustomColors.getCustomScoreScaleType() != "") {
+            return this.adminPanelCustomColors.getCustomScoreScaleType();
+        }
+        return "unfilled";
+    }
+
+    public void setDisclaimer(String disclaimerText, Uri disclaimerLinkURL, String disclaimerLinkText) {
+        if (isBlank(disclaimerText)) {
+            Log.w(Constants.TAG, "setDisclaimer - disclaimerText cannot be blank.");
+            return;
+        }
+        if (disclaimerLinkURL == null) {
+            Log.w(Constants.TAG, "setDisclaimer - disclaimerLinkURL cannot be null.");
+            return;
+        }
+        if (isBlank(disclaimerLinkText)) {
+            Log.w(Constants.TAG, "setDisclaimer - disclaimerLinkText cannot be blank.");
+            return;
+        }
+        this.showDisclaimer = true;
+        this.disclaimerText = disclaimerText;
+        this.disclaimerLinkURL = disclaimerLinkURL;
+        this.disclaimerLinkText = disclaimerLinkText;
+    }
     public int getThankYouButtonBackgroundColor () {
         if (thankYouButtonBackgroundColor != Constants.NOT_SET) {
             return thankYouButtonBackgroundColor;
+        } else if (adminPanelCustomColors != null && adminPanelCustomColors.getCustomSecondaryColor() != Constants.NOT_SET) {
+            return adminPanelCustomColors.getCustomSecondaryColor();
         }
         return R.color.wootric_score_color;
     }
@@ -706,12 +795,21 @@ public class Settings implements Parcelable {
     public int getSocialSharingColor () {
         if (socialSharingColor != Constants.NOT_SET) {
             return socialSharingColor;
+        } else if (adminPanelCustomColors != null && adminPanelCustomColors.getCustomSecondaryColor() != Constants.NOT_SET) {
+            return adminPanelCustomColors.getCustomSecondaryColor();
         }
         return R.color.wootric_social;
     }
 
     public void setSocialSharingColor (int socialSharingColor) {
         this.socialSharingColor = socialSharingColor;
+    }
+
+    public int getDriverPicklistColor () {
+        if (adminPanelCustomColors != null && adminPanelCustomColors.getCustomSecondaryColor() != Constants.NOT_SET) {
+            return adminPanelCustomColors.getCustomSecondaryColor();
+        }
+        return R.color.wootric_score_color;
     }
 
     public String getAccountToken() {
@@ -739,6 +837,9 @@ public class Settings implements Parcelable {
         dest.writeInt(this.timeDelay);
         dest.writeByte(surveyImmediately ? (byte) 1 : (byte) 0);
         dest.writeByte(surveyedDefault ? (byte) 1 : (byte) 0);
+        dest.writeByte(showPoweredBy ? (byte) 1 : (byte) 0);
+        dest.writeByte(showOptOut ? (byte) 1 : (byte) 0);
+        dest.writeByte(customFirstQuestionEnabled ? (byte) 1 : (byte) 0);
         dest.writeValue(this.dailyResponseCap);
         dest.writeValue(this.registeredPercent);
         dest.writeValue(this.visitorPercent);
@@ -748,12 +849,18 @@ public class Settings implements Parcelable {
         dest.writeString(this.productName);
         dest.writeString(this.recommendTarget);
         dest.writeString(this.surveyType);
+        dest.writeString(this.customFirstQuestion);
         dest.writeParcelable(this.localCustomThankYou, 0);
         dest.writeParcelable(this.adminPanelCustomThankYou, 0);
         dest.writeParcelable(this.localSocial, 0);
         dest.writeParcelable(this.adminPanelSocial, 0);
+        dest.writeParcelable(this.adminPanelCustomColors, 0);
         dest.writeString(this.accountToken);
         dest.writeString(this.clientID);
+        dest.writeByte(this.showDisclaimer ? (byte) 1 : (byte) 0);
+        dest.writeString(this.disclaimerText);
+        dest.writeParcelable(this.disclaimerLinkURL, 0);
+        dest.writeString(this.disclaimerLinkText);
     }
 
     private Settings(Parcel in) {
@@ -767,6 +874,9 @@ public class Settings implements Parcelable {
         this.timeDelay = in.readInt();
         this.surveyImmediately = in.readByte() != 0;
         this.surveyedDefault = in.readByte() != 0;
+        this.showPoweredBy = in.readByte() != 0;
+        this.showOptOut = in.readByte() != 0;
+        this.customFirstQuestionEnabled = in.readByte() != 0;
         this.dailyResponseCap = (Integer) in.readValue(Integer.class.getClassLoader());
         this.registeredPercent = (Integer) in.readValue(Integer.class.getClassLoader());
         this.visitorPercent = (Integer) in.readValue(Integer.class.getClassLoader());
@@ -776,12 +886,18 @@ public class Settings implements Parcelable {
         this.productName = in.readString();
         this.recommendTarget = in.readString();
         this.surveyType = in.readString();
+        this.customFirstQuestion = in.readString();
         this.localCustomThankYou = in.readParcelable(WootricCustomThankYou.class.getClassLoader());
         this.adminPanelCustomThankYou = in.readParcelable(WootricCustomThankYou.class.getClassLoader());
         this.localSocial = in.readParcelable(WootricSocial.class.getClassLoader());
         this.adminPanelSocial = in.readParcelable(WootricSocial.class.getClassLoader());
+        this.adminPanelCustomColors = in.readParcelable(WootricCustomColor.class.getClassLoader());
         this.accountToken = in.readString();
         this.clientID = in.readString();
+        this.showDisclaimer = in.readByte() != 0;
+        this.disclaimerText = in.readString();
+        this.disclaimerLinkURL = in.readParcelable(Uri.class.getClassLoader());
+        this.disclaimerLinkText = in.readString();
     }
 
     public static final Creator<Settings> CREATOR = new Creator<Settings>() {
@@ -798,6 +914,8 @@ public class Settings implements Parcelable {
         settings.setSurveyType(settingsObject.optString("survey_type", "NPS"));
         settings.firstSurvey = settingsObject.optLong("first_survey");
         settings.adminPanelTimeDelay = settingsObject.optInt("time_delay");
+        settings.showPoweredBy = settingsObject.optBoolean("powered_by");
+        settings.customFirstQuestionEnabled = settingsObject.optBoolean("custom_first_question_enabled");
 
         if (settingsObject.has("account_token")) {
             settings.accountToken = settingsObject.optString("account_token");
@@ -824,6 +942,14 @@ public class Settings implements Parcelable {
             settings.setDeclineResurveyThrottle(settingsObject.optInt("decline_resurvey_throttle"));
         }
 
+        if (settingsObject.has("language")) {
+            settings.setLanguageCode(settingsObject.optString("language"));
+        }
+
+        if (settings.customFirstQuestionEnabled) {
+            settings.customFirstQuestion = settingsObject.optString("custom_first_question");
+        }
+
         JSONObject localizedTextsJson = settingsObject.optJSONObject("localized_texts");
         settings.localizedTexts = LocalizedTexts.fromJson(localizedTextsJson, settings.getSurveyType());
 
@@ -835,6 +961,9 @@ public class Settings implements Parcelable {
 
         JSONObject socialJson = settingsObject.optJSONObject("social");
         settings.adminPanelSocial = WootricSocial.fromJson(socialJson);
+
+        JSONObject customColorsJson = settingsObject.optJSONObject("custom_colors");
+        settings.adminPanelCustomColors = WootricCustomColor.fromJson(customColorsJson);
 
         return settings;
     }

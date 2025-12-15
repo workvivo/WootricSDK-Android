@@ -1,3 +1,69 @@
+## 2.27.1 (2024-12-11)
+
+- Fix anchors for larger display text
+
+## 2.27.0 (2024-07-17)
+
+- Add survey customizations
+
+## 2.26.1 (2024-03-01)
+
+- Fix disclaimer's TextView gravity for ReactNative & Flutter
+
+## 2.26.0 (2024-02-28)
+
+- Add disclaimer support
+
+## 2.25.1 (2023-07-12)
+
+- Fix NullPointerException when setting color in tablets (https://github.com/Wootric/WootricSDK-flutter/issues/8)
+
+## 2.25.0 (2023-06-01)
+
+- Add support for AU tokens
+
+## 2.24.3 (2023-05-12)
+
+- Fix getScoreColor bug
+
+## 2.24.2 (2023-03-27)
+
+- Fix crash after stopping a survey
+
+## 2.24.1 (2023-03-07)
+
+- Fix missing files on Maven
+
+## 2.24.0 (2023-03-06)
+
+- Add support for custom first question
+- Fix EditText background for Flutter
+- Fix AlertDialog theme for Flutter
+- Add checks for driver picklist fields
+- Remove unused code
+
+## 2.23.0 (2023-02-09)
+
+- Add support for Driver Picklist feature
+- Add language to response
+
+## 2.22.1 (2023-02-03)
+
+- Fix thank you dialog button color
+- Thank you dialog dismiss survey on touch outside
+
+## 2.22.0 (2023-01-31)
+
+- Add option to hide "powered by InMoment"
+ 
+## 2.21.3 (2023-01-12)
+
+- Fix thank_you_button color being overriden by colorPrimary
+
+## 2.21.2 (2023-01-09)
+
+- Fix color ID resource not found
+
 ## 2.21.1 (2022-02-14)
 
 - Fix survey rating numbers hidden when device is set to maximum font size

@@ -22,15 +22,23 @@
 
 package com.wootric.androidsdk.views.support;
 
+import static com.wootric.androidsdk.Constants.API_BASE_URL;
+
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
-import androidx.fragment.app.DialogFragment;
+import android.text.SpannableString;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -39,6 +47,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
+import androidx.fragment.app.DialogFragment;
 
 import com.wootric.androidsdk.OfflineDataHandler;
 import com.wootric.androidsdk.R;
@@ -86,6 +96,9 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
     private Settings mSettings;
     private LinearLayout mPoweredBy;
     private TextView mBtnOptOut;
+    private HashMap<String, String>mDriverPicklist;
+    private LinearLayout mDisclaimer;
+    private TextView mDisclaimerText;
 
     private int mScore = -1;
     private String mText;
@@ -127,7 +140,7 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setStyle(android.app.DialogFragment.STYLE_NO_TITLE, 0);
+        setStyle(DialogFragment.STYLE_NO_TITLE, 0);
         setupState(savedInstanceState);
 
         mSocialHandler = new SocialHandler(getActivity());
@@ -145,6 +158,7 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.wootric_fragment_survey, container, false);
         mPoweredBy = (LinearLayout) view.findViewById(R.id.wootric_powered_by);
+        mDisclaimer = (LinearLayout) view.findViewById(R.id.wootric_disclaimer);
 
         if (!mIsTablet) {
             getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);
@@ -157,6 +171,10 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
         mBtnOptOut = (TextView) view.findViewById(R.id.wootric_btn_opt_out);
         mBtnOptOut.setText(mSettings.getBtnOptOut());
 
+        if (!mSettings.isShowPoweredBy() && mPoweredBy != null) {
+            mPoweredBy.setVisibility(View.GONE);
+        }
+
         if (mSettings.isShowOptOut()) {
             mBtnOptOut.setVisibility(View.VISIBLE);
             mBtnOptOut.setOnClickListener(new View.OnClickListener() {
@@ -168,10 +186,66 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
 
             if(!mIsTablet) {
                 mPoweredBy.setGravity(Gravity.RIGHT);
-            } else {
-                TextView mDotSeparator = (TextView) view.findViewById(R.id.footer_dot_separator);
-                mDotSeparator.setVisibility(View.VISIBLE);
             }
+        }
+
+        if (mIsTablet) {
+            LinearLayout footer = view.findViewById(R.id.wootric_footer_2);
+            mBtnOptOut = (TextView) footer.findViewById(R.id.wootric_btn_opt_out);
+            mBtnOptOut.setText(mSettings.getBtnOptOut());
+
+            if (mSettings.isShowOptOut()) {
+                mBtnOptOut.setVisibility(View.VISIBLE);
+                mBtnOptOut.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        optOut();
+                    }
+                });
+            }
+            mDisclaimerText = (TextView) mFooter.findViewById(R.id.wootric_disclaimer_text);
+            if (mSettings.showDisclaimer()) {
+                mDisclaimerText = (TextView) mFooter.findViewById(R.id.wootric_disclaimer_text);
+                ClickableSpan clickableSpan = new ClickableSpan() {
+                    @Override
+                    public void onClick(View textView) {
+                        Intent disclaimerIntent = new Intent(Intent.ACTION_VIEW, mSettings.getDisclaimerLinkURL());
+                        startActivity(disclaimerIntent);
+                    }
+                };
+                SpannableString ss = Utils.getSpannableString(clickableSpan, mSettings.getDisclaimerText(), mSettings.getDisclaimerLinkText());
+                mDisclaimerText.setText(ss);
+                mDisclaimerText.setMovementMethod(LinkMovementMethod.getInstance());
+                mDisclaimerText.setVisibility(View.VISIBLE);
+                mDisclaimerText = (TextView) footer.findViewById(R.id.wootric_disclaimer_text);
+                ClickableSpan clickableSpan2 = new ClickableSpan() {
+                    @Override
+                    public void onClick(View textView) {
+                        Intent disclaimerIntent = new Intent(Intent.ACTION_VIEW, mSettings.getDisclaimerLinkURL());
+                        startActivity(disclaimerIntent);
+                    }
+                };
+                SpannableString ss2 = Utils.getSpannableString(clickableSpan, mSettings.getDisclaimerText(), mSettings.getDisclaimerLinkText());
+                mDisclaimerText.setText(ss2);
+                mDisclaimerText.setMovementMethod(LinkMovementMethod.getInstance());
+                mDisclaimerText.setVisibility(View.VISIBLE);
+            }
+        } else {
+            mDisclaimerText = (TextView) mDisclaimer.findViewById(R.id.wootric_disclaimer_text);
+        }
+        
+        if (mSettings.showDisclaimer()) {
+            ClickableSpan clickableSpan = new ClickableSpan() {
+                @Override
+                public void onClick(View textView) {
+                    Intent disclaimerIntent = new Intent(Intent.ACTION_VIEW, mSettings.getDisclaimerLinkURL());
+                    startActivity(disclaimerIntent);
+                }
+            };
+            SpannableString ss = Utils.getSpannableString(clickableSpan, mSettings.getDisclaimerText(), mSettings.getDisclaimerLinkText());
+            mDisclaimerText.setText(ss);
+            mDisclaimerText.setMovementMethod(LinkMovementMethod.getInstance());
+            mDisclaimerText.setVisibility(View.VISIBLE);
         }
 
         return view;
@@ -255,10 +329,11 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
     }
 
     @Override
-    public void onSurveySubmit(int score, String text) {
-        mWootricApiClient.createResponse(mEndUser.getId(), mSettings.getUserID(), mSettings.getAccountID(), mAccessToken, mOriginUrl, score, priority, text, mUniqueLink);
+    public void onSurveySubmit(int score, String text, HashMap<String, String> driverPicklist) {
+        mWootricApiClient.createResponse(mEndUser.getId(), mSettings.getUserID(), mSettings.getAccountID(), mAccessToken, mOriginUrl, score, priority, text, mUniqueLink, mSettings.getLanguageCode(),  driverPicklist);
         mScore = score;
         mText = text;
+        mDriverPicklist = driverPicklist;
         mResponseSent = true;
         priority++;
     }
@@ -338,7 +413,7 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
 
         if (activity != null) {
             mShouldShowSimpleDialog = true;
-            ThankYouDialogFactory.create(activity, mSettings, mSurveyLayout.getSelectedScore(), mText, mSurveyCallback, mOnSurveyFinishedListener).show();
+            ThankYouDialogFactory.create(activity, mSettings, mSurveyLayout.getSelectedScore(), mText, mSurveyCallback, mOnSurveyFinishedListener, mDriverPicklist).show();
         }
 
         dismiss();
@@ -368,6 +443,7 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
                     hashMap.put("score", mScore);
                 }
                 hashMap.put("text", mText);
+                hashMap.put("driver_picklist", mDriverPicklist);
                 mSurveyCallback.onSurveyDidHide(hashMap);
             }
         }
@@ -389,8 +465,8 @@ public class SurveyFragment extends DialogFragment implements SurveyLayoutListen
     }
 
     private void optOut() {
-        String tld = Utils.startsWithEU(mUser.getAccountToken()) ? "eu" : "com";
-        String optOutUrl = "https://app.wootric." + tld + "/opt_out?token=" + mUser.getAccountToken()
+        String tld = Utils.getTokenTDL(mUser.getAccountToken());
+        String optOutUrl = API_BASE_URL + tld + "/opt_out?token=" + mUser.getAccountToken()
                 + "&metric_type=" + mSettings.getSurveyType()
                 + "&end_user_id=" + Long.toString(mEndUser.getId())
                 + "&end_user_email=" + mEndUser.getEmail()

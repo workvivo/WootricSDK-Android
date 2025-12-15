@@ -27,6 +27,7 @@ import android.app.Activity;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Handler;
+import android.util.Log;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
@@ -34,8 +35,6 @@ import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleObserver;
 import androidx.lifecycle.OnLifecycleEvent;
 import androidx.lifecycle.ProcessLifecycleOwner;
-
-import android.util.Log;
 
 import com.wootric.androidsdk.network.WootricApiCallback;
 import com.wootric.androidsdk.network.WootricRemoteClient;
@@ -177,6 +176,7 @@ public class SurveyManager implements SurveyValidator.OnSurveyValidatedListener,
 
     @Override
     public void onSurveyValidated(Settings surveyServerSettings) {
+        if (currentEvent == null) return;
         currentEvent.getSettings().mergeWithSurveyServerSettings(surveyServerSettings);
         this.eventQueue.clear();
 
@@ -213,7 +213,8 @@ public class SurveyManager implements SurveyValidator.OnSurveyValidatedListener,
 
     @Override
     public void onAuthenticateSuccess(String accessToken) {
-        if(accessToken == null) {
+        if (currentEvent == null) return;
+        if (accessToken == null) {
             Wootric.notifySurveyFinished(false, false, 0);
             resetSurvey();
             return;
@@ -230,6 +231,7 @@ public class SurveyManager implements SurveyValidator.OnSurveyValidatedListener,
 
     @Override
     public void onGetEndUserIdSuccess(long endUserId) {
+        if (currentEvent == null) return;
         currentEvent.getEndUser().setId(endUserId);
 
         if(currentEvent.getEndUser().hasProperties() ||
@@ -243,11 +245,13 @@ public class SurveyManager implements SurveyValidator.OnSurveyValidatedListener,
 
     @Override
     public void onEndUserNotFound() {
+        if (currentEvent == null) return;
         sendCreateEndUserRequest();
     }
 
     @Override
     public void onCreateEndUserSuccess(long endUserId) {
+        if (currentEvent == null) return;
         currentEvent.getEndUser().setId(endUserId);
 
         showSurvey();
